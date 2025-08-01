@@ -48,7 +48,7 @@ valor_hora = st.sidebar.number_input(
 
 duracion_clase = st.sidebar.number_input(
     "Duración de la clase (horas):", 
-    value= 1
+    value= 1.0
 )
 
 # Convertir mes a inglés para calendar
@@ -98,4 +98,5 @@ n_dias = len(seleccionados_ordenados)
 st.write(f"Son {n_dias} días de clases, lo que hace un valor total de ${str(int(n_dias*valor_hora*duracion_clase))}")
 
 #st.write(f"Son {n_dias} días de clases, lo que hace un valor total de ${str(int(n_dias*valor_hora*duracion_clase))}")
+
 
