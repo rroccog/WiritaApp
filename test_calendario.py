@@ -97,4 +97,5 @@ st.subheader("Resumen")
 n_dias = len(seleccionados_ordenados)
 st.write(f"Son {n_dias} días de clases, lo que hace un valor total de ${str(int(n_dias*valor_hora*duracion_clase))}")
 
-st.write(f"Son {n_dias} días de clases, lo que hace un valor total de ${str(int(n_dias*valor_hora*duracion_clase))}")
+#st.write(f"Son {n_dias} días de clases, lo que hace un valor total de ${str(int(n_dias*valor_hora*duracion_clase))}")
+
