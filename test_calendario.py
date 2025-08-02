@@ -1,11 +1,29 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sat Aug  2 01:05:23 2025
+
+@author: Rocco
+"""
+from datetime import date
 import streamlit as st
 import calendar
 from datetime import datetime
+from datetime import timedelta
 
 # Configuración inicial
 st.set_page_config(layout='wide', initial_sidebar_state='expanded')
 
 yy = datetime.today().year
+
+dias_frances = {
+    "Monday": "Lundi",
+    "Tuesday": "Mardi",
+    "Wednesday": "Mercredi",
+    "Thursday": "Jeudi",
+    "Friday": "Vendredi",
+    "Saturday": "Samedi",
+    "Sunday": "Dimanche"
+}
 
 meses_es_en = {
     "Enero": "January", 
@@ -84,6 +102,18 @@ for semana in month_calendar:
             else:
                 st.session_state.seleccionados.discard(dia)
 
+col1a, col2a, col3a, col4a, col5a = st.columns(5)
+with col1a:
+    lunes = st.time_input("Horario lunes", value = None, step=60)
+with col2a:
+    martes = st.time_input("Horario martes", value = None)
+with col3a:
+    miercoles = st.time_input("Horario miercoles", value = None)
+with col4a:
+    jueves = st.time_input("Horario jueves", value = None)
+with col5a:
+    viernes = st.time_input("Horario viernes", value = None)
+
 # Mostrar selección actual combinada
 seleccionados_ordenados = sorted(st.session_state.seleccionados)
 col1, col2, col3 = st.columns(3)
@@ -93,13 +123,111 @@ with col2:
     if st.button("Deseleccionar todos los días"):
         st.session_state.seleccionados = set()
 
-
-st.subheader("Resumen")
-
 n_dias = len(seleccionados_ordenados)
 st.write(f"Son {n_dias} días de clases, lo que hace un valor total de ${str(int(n_dias*valor_minuto*duracion_clase))}")
 
-#st.write(f"Son {n_dias} días de clases, lo que hace un valor total de ${str(int(n_dias*valor_hora*duracion_clase))}")
+
+st.subheader("Resumen")
+estudiante = st.text_input("Nombre:")
+
+# Obtenemos el número del mes y el calendario del mes
+mes = list(calendar.month_name).index(meses_es_en[mes_esp])
+calendario_mes = calendar.monthcalendar(yy, mes)
+
+# Días seleccionados ordenados
+dias_seleccionados = sorted(st.session_state.seleccionados)
+
+# Creamos agrupación por semana
+semanas_agrupadas = []
+
+for semana in calendario_mes:
+    dias_semana = []
+    for i, dia in enumerate(semana):
+        if dia in dias_seleccionados:
+            nombre_dia = date(yy, mes, dia).strftime("%A")
+            dias_semana.append(f"{dia} ({nombre_dia})")
+    if dias_semana:
+        semanas_agrupadas.append(dias_semana)
+
+lun_ini, lun_fin, mar_ini, mar_fin, mie_ini, mie_fin, jue_ini, jue_fin, vie_ini, vie_fin = [],[],[],[],[],[],[],[],[],[]
+
+horarios = {}
+
+if lunes is not None:
+    lun_ini = datetime.combine(date.today(), lunes)
+    lun_fin = (lun_ini + timedelta(minutes=duracion_clase)).time()
+    horarios["Lundi"] = (lunes, lun_fin)
+
+if martes is not None:
+    mar_ini = datetime.combine(date.today(), martes)
+    mar_fin = (mar_ini + timedelta(minutes=duracion_clase)).time()
+    horarios["Mardi"] = (martes, mar_fin)
+
+if miercoles is not None:
+    mie_ini = datetime.combine(date.today(), miercoles)
+    mie_fin = (mie_ini + timedelta(minutes=duracion_clase)).time()
+    horarios["Mercredi"] = (miercoles, mie_fin)
+
+if jueves is not None:
+    jue_ini = datetime.combine(date.today(), jueves)
+    jue_fin = (jue_ini + timedelta(minutes=duracion_clase)).time()
+    horarios["Jeudi"] = (jueves, jue_fin)
+
+if viernes is not None:
+    vie_ini = datetime.combine(date.today(), viernes)
+    vie_fin = (vie_ini + timedelta(minutes=duracion_clase)).time()
+    horarios["Vendredi"] = (viernes, vie_fin)
+
+
+# Construir el texto de las semanas agrupadas
+# Agrupación por semana como tuplas
+semanas_agrupadas = []
+
+for semana in calendario_mes:
+    dias_semana = []
+    for dia in semana:
+        if dia in dias_seleccionados and dia != 0:
+            nombre_dia_en = date(yy, mes, dia).strftime("%A")  # día en inglés
+            nombre_dia_fr = dias_frances.get(nombre_dia_en, nombre_dia_en)
+            dias_semana.append((str(dia), nombre_dia_fr))
+    if dias_semana:
+        semanas_agrupadas.append(dias_semana)
+
+# Construir texto final
+lineas = []
+for i, semana in enumerate(semanas_agrupadas, start=1):
+    partes = []
+    for dia, nombre in semana:
+        if nombre in horarios:
+            ini, fin = horarios[nombre]
+            partes.append(f"{nombre} {dia} de {ini.strftime('%H:%M')} à {fin.strftime('%H:%M')}")
+        else:
+            partes.append(f"{nombre} {dia}")
+    lineas.append(f"• {' - '.join(partes)}")
+
+texto_semanas = "\n".join(lineas)
+
+
+# Luego lo insertas en el f-string final
+mensaje = f"""
+Bonsoir {estudiante},
+
+J'espère que tu vas bien.
+
+Comme convenu, voici les dates des cours d'août:
+    
+{texto_semanas}
+
+Total : {int(n_dias*(duracion_clase/60))} heures x {valor_hora} CLP = {str(int(n_dias*valor_minuto*duracion_clase))} CLP
+
+J'attends ta confirmation et te souhaite une bonne soirée.
+
+À bientôt,
+
+"""
+
+st.text(mensaje)
+
 
 
 
