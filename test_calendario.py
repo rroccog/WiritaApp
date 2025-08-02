@@ -72,6 +72,9 @@ duracion_clase = st.sidebar.number_input(
     value= 60
 )
 
+with st.sidebar:
+    st.image("AtelierFrance.png", caption="Constanza Sobarzo L.")
+
 # Convertir mes a inglés para calendar
 mes_ingles = meses_es_en[mes_esp]
 month_number = list(calendar.month_name).index(mes_ingles)
@@ -228,6 +231,7 @@ J'attends ta confirmation et te souhaite une bonne soirée.
 """
 
 st.text(mensaje)
+
 
 
 
