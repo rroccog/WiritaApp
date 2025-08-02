@@ -9,6 +9,7 @@ import streamlit as st
 import calendar
 from datetime import datetime
 from datetime import timedelta
+import math
 
 # Configuración inicial
 st.set_page_config(layout='wide', initial_sidebar_state='expanded')
@@ -124,8 +125,8 @@ with col2:
         st.session_state.seleccionados = set()
 
 n_dias = len(seleccionados_ordenados)
-st.write(f"Son {n_dias} días de clases, lo que hace un valor total de ${str(int(n_dias*valor_minuto*duracion_clase))}")
-
+valor_total_aprox = math.ceil(int(n_dias*valor_minuto*duracion_clase) / 1000) * 1000
+st.write(f"Son {n_dias} días de clases, lo que hace un valor total de ${str(valor_total_aprox)}")
 
 st.subheader("Resumen")
 estudiante = st.text_input("Nombre:")
@@ -218,7 +219,7 @@ Comme convenu, voici les dates des cours d'août:
     
 {texto_semanas}
 
-Total : {int(n_dias*(duracion_clase/60))} heures x {valor_hora} CLP = {str(int(n_dias*valor_minuto*duracion_clase))} CLP
+Total : {int(n_dias*(duracion_clase/60))} heures x {valor_hora} CLP = {str(valor_total_aprox)} CLP
 
 J'attends ta confirmation et te souhaite une bonne soirée.
 
@@ -227,6 +228,7 @@ J'attends ta confirmation et te souhaite une bonne soirée.
 """
 
 st.text(mensaje)
+
 
 
 
