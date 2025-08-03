@@ -15,7 +15,13 @@ import math
 st.set_page_config(layout='wide', initial_sidebar_state='expanded')
 
 yy = datetime.today().year
+hora = datetime.today().hour
 
+if hora < 17:
+    saludo = "Bonjour"
+else:
+    saludo = "Bonsoir"
+    
 dias_frances = {
     "Monday": "Lundi",
     "Tuesday": "Mardi",
@@ -214,7 +220,7 @@ texto_semanas = "\n".join(lineas)
 
 # Luego lo insertas en el f-string final
 mensaje = f"""
-Bonsoir {estudiante},
+{saludo} {estudiante},
 
 J'espère que tu vas bien.
 
@@ -231,6 +237,7 @@ J'attends ta confirmation et te souhaite une bonne soirée.
 """
 
 st.text(mensaje)
+
 
 
 
