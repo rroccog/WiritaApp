@@ -11,6 +11,10 @@ from datetime import datetime
 from datetime import timedelta
 import math
 
+icon_texto = "AtelierFrance_texto.png"
+icon_icon = "AtelierFrance_Icono.png"
+st.logo(icon_texto, icon_image=icon_icon)
+
 # Configuración inicial
 st.set_page_config(layout='wide', initial_sidebar_state='expanded')
 
@@ -237,6 +241,7 @@ J'attends ta confirmation et te souhaite une bonne soirée.
 """
 
 st.text(mensaje)
+
 
 
 
