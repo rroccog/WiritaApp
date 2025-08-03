@@ -9,7 +9,6 @@ import streamlit as st
 import calendar
 from datetime import datetime
 from datetime import timedelta
-import math
 
 icon_texto = "AtelierFrance_texto.png"
 icon_icon = "AtelierFrance_Icono.png"
@@ -138,7 +137,7 @@ with col2:
         st.session_state.seleccionados = set()
 
 n_dias = len(seleccionados_ordenados)
-valor_total_aprox = math.ceil(int(n_dias*valor_minuto*duracion_clase) / 1000) * 1000
+valor_total_aprox = round(int(n_dias*valor_minuto*duracion_clase), -1)
 st.write(f"Son {n_dias} días de clases, lo que hace un valor total de ${str(valor_total_aprox)}")
 
 st.subheader("Resumen")
@@ -232,7 +231,7 @@ Comme convenu, voici les dates des cours d'août :
     
 {texto_semanas}
 
-Total : {int(n_dias*(duracion_clase/60))} heures x {valor_hora} CLP = {str(valor_total_aprox)} CLP
+Total : {(n_dias*(duracion_clase/60))} heures x {valor_hora} CLP = {str(valor_total_aprox)} CLP
 
 J'attends ta confirmation et te souhaite une bonne soirée.
 
@@ -241,6 +240,7 @@ J'attends ta confirmation et te souhaite une bonne soirée.
 """
 
 st.text(mensaje)
+
 
 
 
