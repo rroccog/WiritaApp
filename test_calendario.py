@@ -218,7 +218,7 @@ Bonsoir {estudiante},
 
 J'espère que tu vas bien.
 
-Comme convenu, voici les dates des cours d'août:
+Comme convenu, voici les dates des cours d'août :
     
 {texto_semanas}
 
@@ -231,6 +231,7 @@ J'attends ta confirmation et te souhaite une bonne soirée.
 """
 
 st.text(mensaje)
+
 
 
 
