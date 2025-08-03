@@ -204,7 +204,7 @@ for i, semana in enumerate(semanas_agrupadas, start=1):
     for dia, nombre in semana:
         if nombre in horarios:
             ini, fin = horarios[nombre]
-            partes.append(f"{nombre} {dia} de {ini.strftime('%H:%M')} à {fin.strftime('%H:%M')}")
+            partes.append(f"{nombre} {dia} de {ini.strftime('%H:%M').replace(":", "H")} à {fin.strftime('%H:%M').replace(":", "H")}")
         else:
             partes.append(f"{nombre} {dia}")
     lineas.append(f"• {' - '.join(partes)}")
@@ -231,6 +231,7 @@ J'attends ta confirmation et te souhaite une bonne soirée.
 """
 
 st.text(mensaje)
+
 
 
 
