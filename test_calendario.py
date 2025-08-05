@@ -9,6 +9,8 @@ import streamlit as st
 import calendar
 from datetime import datetime
 from datetime import timedelta
+import requests
+import pandas as pd
 
 icon_texto = "AtelierFrance_texto.png"
 icon_icon = "AtelierFrance_Icono.png"
@@ -19,6 +21,51 @@ st.set_page_config(layout='wide', initial_sidebar_state='expanded')
 
 yy = datetime.today().year
 hora = datetime.today().hour
+
+# Función para cargar feriados con caché
+@st.cache_data(ttl=3600)  # Cache por 1 hora
+def cargar_feriados():
+    try:
+        url = 'https://api.boostr.cl/holidays.json'
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()  # Lanza excepción si hay error HTTP
+        
+        data = response.json()
+        
+        # Verificar que la respuesta tenga el formato esperado
+        if 'data' in data and isinstance(data['data'], list) and len(data['data']) > 0:
+            feriados_raw = data['data']
+            df = pd.DataFrame(feriados_raw)
+            
+            # Verificar que el DataFrame tenga la columna 'date'
+            if 'date' in df.columns:
+                df['date'] = pd.to_datetime(df['date'])
+                df['anio'] = df['date'].dt.year
+                df['mes'] = df['date'].dt.month
+                df['dia'] = df['date'].dt.day
+                return df[['anio', 'mes', 'dia']]
+            else:
+                st.warning("La API de feriados no devolvió el formato esperado. Continuando sin feriados.")
+                return pd.DataFrame(columns=['anio', 'mes', 'dia'])
+        else:
+            st.warning("La API de feriados devolvió datos vacíos. Continuando sin feriados.")
+            return pd.DataFrame(columns=['anio', 'mes', 'dia'])
+            
+    except requests.exceptions.RequestException as e:
+        if "429" in str(e):
+            st.info("⏳ API de feriados temporalmente ocupada. Los feriados se cargarán en el próximo intento.")
+        else:
+            st.warning(f"Error al conectar con la API de feriados: {e}. Continuando sin feriados.")
+        return pd.DataFrame(columns=['anio', 'mes', 'dia'])
+    except ValueError as e:
+        st.warning(f"Error al procesar los datos de feriados: {e}. Continuando sin feriados.")
+        return pd.DataFrame(columns=['anio', 'mes', 'dia'])
+    except Exception as e:
+        st.warning(f"Error inesperado con los feriados: {e}. Continuando sin feriados.")
+        return pd.DataFrame(columns=['anio', 'mes', 'dia'])
+
+# Cargar feriados usando el caché
+feriados_df = cargar_feriados()
 
 if hora < 17:
     saludo = "Bonjour"
@@ -89,6 +136,9 @@ mes_ingles = meses_es_en[mes_esp]
 month_number = list(calendar.month_name).index(mes_ingles)
 month_calendar = calendar.monthcalendar(yy, month_number)
 
+feriados_dias = feriados_df[feriados_df['mes'] == month_number]
+dias_feriados = list(feriados_dias['dia'])
+
 # Estado para días seleccionados en calendario
 if "seleccionados" not in st.session_state:
     st.session_state.seleccionados = set()
@@ -107,9 +157,10 @@ for semana in month_calendar:
             cols[i].markdown(" ")
         else:
             key = f"dia_{dia}"
+            es_feriado = dia in dias_feriados
+            label = f"{dia} 🎉" if es_feriado else str(dia)
             marcado = dia in st.session_state.seleccionados or dias_semana[i] in dias_sidebar
-            # Checkbox muestra si está marcado desde calendario o sidebar
-            nuevo_estado = cols[i].checkbox(label=str(dia), value=marcado, key=key)
+            nuevo_estado = cols[i].checkbox(label=label, value=marcado, key=key)
             if nuevo_estado:
                 st.session_state.seleccionados.add(dia)
             else:
@@ -240,13 +291,6 @@ J'attends ta confirmation et te souhaite une bonne soirée.
 """
 
 st.text(mensaje)
-
-
-
-
-
-
-
 
 
 
