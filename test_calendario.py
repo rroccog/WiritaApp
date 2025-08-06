@@ -107,8 +107,7 @@ dias_semana = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"]
 mes_esp = st.sidebar.selectbox(
     'Mes',
     list(meses_es_en.keys()),
-    index=datetime.today().month-1,
-    help = "Por defecto se selecciona el mes siguiente"
+    index=datetime.today().month-1
 )
 
 
@@ -129,7 +128,8 @@ valor_minuto = valor_hora/60
 
 duracion_clase = st.sidebar.number_input(
     "Duración de la clase (minutos):", 
-    value= 60
+    value= 60,
+    step = 15
 )
 
 with st.sidebar:
@@ -319,4 +319,5 @@ with tab2:
         width=1200,
         scrolling=True
     )
+
 
