@@ -21,6 +21,7 @@ st.set_page_config(layout='wide', initial_sidebar_state='expanded')
 
 yy = datetime.today().year
 hora = datetime.today().hour
+dd = datetime.today().day
 
 # Función para cargar feriados con caché
 @st.cache_data(ttl=3600)  # Cache por 1 hora
@@ -104,7 +105,7 @@ dias_semana = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"]
 mes_esp = st.sidebar.selectbox(
     'Mes',
     list(meses_es_en.keys()),
-    index=datetime.today().month,
+    index=datetime.today().month-1,
     help = "Por defecto se selecciona el mes siguiente"
 )
 
@@ -118,7 +119,8 @@ dias_sidebar = st.sidebar.multiselect(
 
 valor_hora = st.sidebar.number_input(
     "Valor de la clase $", 
-    value= 17000
+    value= 17000,
+    step = 1000
 )
 
 valor_minuto = valor_hora/60
@@ -159,8 +161,23 @@ for semana in month_calendar:
             key = f"dia_{dia}"
             es_feriado = dia in dias_feriados
             label = f"{dia} 🎉" if es_feriado else str(dia)
-            marcado = dia in st.session_state.seleccionados or dias_semana[i] in dias_sidebar
-            nuevo_estado = cols[i].checkbox(label=label, value=marcado, key=key)
+            
+            fecha_dia = datetime(yy, month_number, dia)
+            hoy = datetime.today()
+            es_pasado = fecha_dia.date() < hoy.date()
+
+            # Solo marcar si no es pasado y cumple las condiciones
+            marcado = (not es_pasado) and (
+                dia in st.session_state.seleccionados or dias_semana[i] in dias_sidebar
+            )
+
+            nuevo_estado = cols[i].checkbox(
+                label=label,
+                value=marcado,
+                key=key,
+                disabled=es_pasado
+            )
+
             if nuevo_estado:
                 st.session_state.seleccionados.add(dia)
             else:
@@ -264,7 +281,7 @@ for i, semana in enumerate(semanas_agrupadas, start=1):
     for dia, nombre in semana:
         if nombre in horarios:
             ini, fin = horarios[nombre]
-            partes.append(f"{nombre} {dia} de {ini.strftime('%H:%M').replace(":", "H")} à {fin.strftime('%H:%M').replace(":", "H")}")
+            partes.append(f"{nombre} {dia} de {ini.strftime('%H:%M').replace(':', 'H')} à {fin.strftime('%H:%M').replace(':', 'H')}")
         else:
             partes.append(f"{nombre} {dia}")
     lineas.append(f"• {' - '.join(partes)}")
@@ -291,7 +308,3 @@ J'attends ta confirmation et te souhaite une bonne soirée.
 """
 
 st.text(mensaje)
-
-
-
-
