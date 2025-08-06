@@ -293,21 +293,21 @@ with tab1:
     estudiante = st.text_input("Nombre:") 
        
     mensaje = f"""
-    {saludo} {estudiante},
+{saludo} {estudiante},
 
-    J'espère que tu vas bien.
+J'espère que tu vas bien.
 
-    Comme convenu, voici les dates des cours d'août :
+Comme convenu, voici les dates des cours d'août :
             
-    {texto_semanas}
+{texto_semanas}
 
-    Total : {(n_dias*(duracion_clase/60))} heures x {valor_hora} CLP = {str(valor_total_aprox)} CLP
+Total : {(n_dias*(duracion_clase/60))} heures x {valor_hora} CLP = {str(valor_total_aprox)} CLP
 
-    J'attends ta confirmation et te souhaite une bonne soirée.
+J'attends ta confirmation et te souhaite une bonne soirée.
 
-    À bientôt,
+À bientôt,
 
-    """
+"""
 
     st.text(mensaje)
 
@@ -319,3 +319,4 @@ with tab2:
         width=1200,
         scrolling=True
     )
+
