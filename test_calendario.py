@@ -11,13 +11,15 @@ from datetime import datetime
 from datetime import timedelta
 import requests
 import pandas as pd
+import streamlit.components.v1 as components
+
+# Configuración inicial
+st.set_page_config(layout='wide', initial_sidebar_state='expanded')
+tab1, tab2 = st.tabs(["Calcular valores", "Calendario (google drive)"])
 
 icon_texto = "AtelierFrance_texto.png"
 icon_icon = "AtelierFrance_Icono.png"
 st.logo(icon_texto, icon_image=icon_icon)
-
-# Configuración inicial
-st.set_page_config(layout='wide', initial_sidebar_state='expanded')
 
 yy = datetime.today().year
 hora = datetime.today().hour
@@ -145,166 +147,175 @@ dias_feriados = list(feriados_dias['dia'])
 if "seleccionados" not in st.session_state:
     st.session_state.seleccionados = set()
 
-st.subheader(f"{mes_esp} {yy}")
 
-# Mostrar calendario con checkboxes para seleccionar/deseleccionar días
-cols = st.columns(7)
-for i, d in enumerate(dias_semana):
-    cols[i].markdown(f"**{d}**")
-
-for semana in month_calendar:
+with tab1:
+    st.subheader(f"{mes_esp} {yy}")
+    # Mostrar calendario con checkboxes para seleccionar/deseleccionar días
     cols = st.columns(7)
-    for i, dia in enumerate(semana):
-        if dia == 0:
-            cols[i].markdown(" ")
-        else:
-            key = f"dia_{dia}"
-            es_feriado = dia in dias_feriados
-            label = f"{dia} 🎉" if es_feriado else str(dia)
-            
-            fecha_dia = datetime(yy, month_number, dia)
-            hoy = datetime.today()
-            es_pasado = fecha_dia.date() < hoy.date()
+    for i, d in enumerate(dias_semana):
+        cols[i].markdown(f"**{d}**")
 
-            # Solo marcar si no es pasado y cumple las condiciones
-            marcado = (not es_pasado) and (
-                dia in st.session_state.seleccionados or dias_semana[i] in dias_sidebar
-            )
-
-            nuevo_estado = cols[i].checkbox(
-                label=label,
-                value=marcado,
-                key=key,
-                disabled=es_pasado
-            )
-
-            if nuevo_estado:
-                st.session_state.seleccionados.add(dia)
+    for semana in month_calendar:
+        cols = st.columns(7)
+        for i, dia in enumerate(semana):
+            if dia == 0:
+                cols[i].markdown(" ")
             else:
-                st.session_state.seleccionados.discard(dia)
+                key = f"dia_{dia}"
+                es_feriado = dia in dias_feriados
+                label = f"{dia} 🎉" if es_feriado else str(dia)
+                
+                fecha_dia = datetime(yy, month_number, dia)
+                hoy = datetime.today()
+                es_pasado = fecha_dia.date() < hoy.date()
 
-col1a, col2a, col3a, col4a, col5a = st.columns(5)
-with col1a:
-    lunes = st.time_input("Horario lunes", value = None, step=60)
-with col2a:
-    martes = st.time_input("Horario martes", value = None)
-with col3a:
-    miercoles = st.time_input("Horario miercoles", value = None)
-with col4a:
-    jueves = st.time_input("Horario jueves", value = None)
-with col5a:
-    viernes = st.time_input("Horario viernes", value = None)
+                # Solo marcar si no es pasado y cumple las condiciones
+                marcado = (not es_pasado) and (
+                    dia in st.session_state.seleccionados or dias_semana[i] in dias_sidebar
+                )
 
-# Mostrar selección actual combinada
-seleccionados_ordenados = sorted(st.session_state.seleccionados)
-col1, col2, col3 = st.columns(3)
-with col1:
-    st.write("Días de clases:", len(seleccionados_ordenados))
-with col2:
-    if st.button("Deseleccionar todos los días"):
-        st.session_state.seleccionados = set()
+                nuevo_estado = cols[i].checkbox(
+                    label=label,
+                    value=marcado,
+                    key=key,
+                    disabled=es_pasado
+                )
 
-n_dias = len(seleccionados_ordenados)
-valor_total_aprox = round(int(n_dias*valor_minuto*duracion_clase), -1)
-st.write(f"Son {n_dias} días de clases, lo que hace un valor total de ${str(valor_total_aprox)}")
+                if nuevo_estado:
+                    st.session_state.seleccionados.add(dia)
+                else:
+                    st.session_state.seleccionados.discard(dia)
 
-st.subheader("Resumen")
-estudiante = st.text_input("Nombre:")
+    col1a, col2a, col3a, col4a, col5a = st.columns(5)
+    with col1a:
+        lunes = st.time_input("Horario lunes", value = None, step=60)
+    with col2a:
+        martes = st.time_input("Horario martes", value = None)
+    with col3a:
+        miercoles = st.time_input("Horario miercoles", value = None)
+    with col4a:
+        jueves = st.time_input("Horario jueves", value = None)
+    with col5a:
+        viernes = st.time_input("Horario viernes", value = None)
 
-# Obtenemos el número del mes y el calendario del mes
-mes = list(calendar.month_name).index(meses_es_en[mes_esp])
-calendario_mes = calendar.monthcalendar(yy, mes)
+    # Mostrar selección actual combinada
+    seleccionados_ordenados = sorted(st.session_state.seleccionados)
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.write("Días de clases:", len(seleccionados_ordenados))
+    with col2:
+        if st.button("Deseleccionar todos los días"):
+            st.session_state.seleccionados = set()
 
-# Días seleccionados ordenados
-dias_seleccionados = sorted(st.session_state.seleccionados)
+    n_dias = len(seleccionados_ordenados)
+    valor_total_aprox = round(int(n_dias*valor_minuto*duracion_clase), -1)
+    st.write(f"Son {n_dias} días de clases, lo que hace un valor total de ${str(valor_total_aprox)}")
 
-# Creamos agrupación por semana
-semanas_agrupadas = []
+    st.subheader("Resumen")
 
-for semana in calendario_mes:
-    dias_semana = []
-    for i, dia in enumerate(semana):
-        if dia in dias_seleccionados:
-            nombre_dia = date(yy, mes, dia).strftime("%A")
-            dias_semana.append(f"{dia} ({nombre_dia})")
-    if dias_semana:
-        semanas_agrupadas.append(dias_semana)
+    # Obtenemos el número del mes y el calendario del mes
+    mes = list(calendar.month_name).index(meses_es_en[mes_esp])
+    calendario_mes = calendar.monthcalendar(yy, mes)
 
-lun_ini, lun_fin, mar_ini, mar_fin, mie_ini, mie_fin, jue_ini, jue_fin, vie_ini, vie_fin = [],[],[],[],[],[],[],[],[],[]
+    # Días seleccionados ordenados
+    dias_seleccionados = sorted(st.session_state.seleccionados)
 
-horarios = {}
+    # Creamos agrupación por semana
+    semanas_agrupadas = []
 
-if lunes is not None:
-    lun_ini = datetime.combine(date.today(), lunes)
-    lun_fin = (lun_ini + timedelta(minutes=duracion_clase)).time()
-    horarios["Lundi"] = (lunes, lun_fin)
+    for semana in calendario_mes:
+        dias_semana = []
+        for i, dia in enumerate(semana):
+            if dia in dias_seleccionados:
+                nombre_dia = date(yy, mes, dia).strftime("%A")
+                dias_semana.append(f"{dia} ({nombre_dia})")
+        if dias_semana:
+            semanas_agrupadas.append(dias_semana)
 
-if martes is not None:
-    mar_ini = datetime.combine(date.today(), martes)
-    mar_fin = (mar_ini + timedelta(minutes=duracion_clase)).time()
-    horarios["Mardi"] = (martes, mar_fin)
+    lun_ini, lun_fin, mar_ini, mar_fin, mie_ini, mie_fin, jue_ini, jue_fin, vie_ini, vie_fin = [],[],[],[],[],[],[],[],[],[]
 
-if miercoles is not None:
-    mie_ini = datetime.combine(date.today(), miercoles)
-    mie_fin = (mie_ini + timedelta(minutes=duracion_clase)).time()
-    horarios["Mercredi"] = (miercoles, mie_fin)
+    horarios = {}
 
-if jueves is not None:
-    jue_ini = datetime.combine(date.today(), jueves)
-    jue_fin = (jue_ini + timedelta(minutes=duracion_clase)).time()
-    horarios["Jeudi"] = (jueves, jue_fin)
+    if lunes is not None:
+        lun_ini = datetime.combine(date.today(), lunes)
+        lun_fin = (lun_ini + timedelta(minutes=duracion_clase)).time()
+        horarios["Lundi"] = (lunes, lun_fin)
 
-if viernes is not None:
-    vie_ini = datetime.combine(date.today(), viernes)
-    vie_fin = (vie_ini + timedelta(minutes=duracion_clase)).time()
-    horarios["Vendredi"] = (viernes, vie_fin)
+    if martes is not None:
+        mar_ini = datetime.combine(date.today(), martes)
+        mar_fin = (mar_ini + timedelta(minutes=duracion_clase)).time()
+        horarios["Mardi"] = (martes, mar_fin)
 
+    if miercoles is not None:
+        mie_ini = datetime.combine(date.today(), miercoles)
+        mie_fin = (mie_ini + timedelta(minutes=duracion_clase)).time()
+        horarios["Mercredi"] = (miercoles, mie_fin)
 
-# Construir el texto de las semanas agrupadas
-# Agrupación por semana como tuplas
-semanas_agrupadas = []
+    if jueves is not None:
+        jue_ini = datetime.combine(date.today(), jueves)
+        jue_fin = (jue_ini + timedelta(minutes=duracion_clase)).time()
+        horarios["Jeudi"] = (jueves, jue_fin)
 
-for semana in calendario_mes:
-    dias_semana = []
-    for dia in semana:
-        if dia in dias_seleccionados and dia != 0:
-            nombre_dia_en = date(yy, mes, dia).strftime("%A")  # día en inglés
-            nombre_dia_fr = dias_frances.get(nombre_dia_en, nombre_dia_en)
-            dias_semana.append((str(dia), nombre_dia_fr))
-    if dias_semana:
-        semanas_agrupadas.append(dias_semana)
-
-# Construir texto final
-lineas = []
-for i, semana in enumerate(semanas_agrupadas, start=1):
-    partes = []
-    for dia, nombre in semana:
-        if nombre in horarios:
-            ini, fin = horarios[nombre]
-            partes.append(f"{nombre} {dia} de {ini.strftime('%H:%M').replace(':', 'H')} à {fin.strftime('%H:%M').replace(':', 'H')}")
-        else:
-            partes.append(f"{nombre} {dia}")
-    lineas.append(f"• {' - '.join(partes)}")
-
-texto_semanas = "\n".join(lineas)
+    if viernes is not None:
+        vie_ini = datetime.combine(date.today(), viernes)
+        vie_fin = (vie_ini + timedelta(minutes=duracion_clase)).time()
+        horarios["Vendredi"] = (viernes, vie_fin)
 
 
-# Luego lo insertas en el f-string final
-mensaje = f"""
-{saludo} {estudiante},
+    # Construir el texto de las semanas agrupadas
+    # Agrupación por semana como tuplas
+    semanas_agrupadas = []
 
-J'espère que tu vas bien.
+    for semana in calendario_mes:
+        dias_semana = []
+        for dia in semana:
+            if dia in dias_seleccionados and dia != 0:
+                nombre_dia_en = date(yy, mes, dia).strftime("%A")  # día en inglés
+                nombre_dia_fr = dias_frances.get(nombre_dia_en, nombre_dia_en)
+                dias_semana.append((str(dia), nombre_dia_fr))
+        if dias_semana:
+            semanas_agrupadas.append(dias_semana)
 
-Comme convenu, voici les dates des cours d'août :
-    
-{texto_semanas}
+    # Construir texto final
+    lineas = []
+    for i, semana in enumerate(semanas_agrupadas, start=1):
+        partes = []
+        for dia, nombre in semana:
+            if nombre in horarios:
+                ini, fin = horarios[nombre]
+                partes.append(f"{nombre} {dia} de {ini.strftime('%H:%M').replace(':', 'H')} à {fin.strftime('%H:%M').replace(':', 'H')}")
+            else:
+                partes.append(f"{nombre} {dia}")
+        lineas.append(f"• {' - '.join(partes)}")
 
-Total : {(n_dias*(duracion_clase/60))} heures x {valor_hora} CLP = {str(valor_total_aprox)} CLP
+    texto_semanas = "\n".join(lineas)
 
-J'attends ta confirmation et te souhaite une bonne soirée.
+    estudiante = st.text_input("Nombre:") 
+       
+    mensaje = f"""
+    {saludo} {estudiante},
 
-À bientôt,
+    J'espère que tu vas bien.
 
-"""
+    Comme convenu, voici les dates des cours d'août :
+            
+    {texto_semanas}
 
-st.text(mensaje)
+    Total : {(n_dias*(duracion_clase/60))} heures x {valor_hora} CLP = {str(valor_total_aprox)} CLP
+
+    J'attends ta confirmation et te souhaite une bonne soirée.
+
+    À bientôt,
+
+    """
+
+    st.text(mensaje)
+
+
+with tab2:
+    components.iframe(
+        "https://docs.google.com/spreadsheets/d/1TOelWaElp_Yaebzl9TWWxC0N32Hl6ox1L7zBXGU9TnI/edit?gid=0#gid=0",
+        height=1200,
+        width=1200,
+        scrolling=True
+    )
