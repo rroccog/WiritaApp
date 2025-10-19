@@ -102,7 +102,6 @@ meses_es_en = {
 
 dias_semana = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"]
 
-# Sidebar con selección múltiple de días para resaltar
 # Selector de mes en sidebar
 mes_esp = st.sidebar.selectbox(
     'Mes',
@@ -110,7 +109,7 @@ mes_esp = st.sidebar.selectbox(
     index=datetime.today().month-1
 )
 
-
+# Sidebar con selección múltiple de días para resaltar
 dias_sidebar = st.sidebar.multiselect(
     'Días de clases', 
     dias_semana,
@@ -147,9 +146,33 @@ dias_feriados = list(feriados_dias['dia'])
 if "seleccionados" not in st.session_state:
     st.session_state.seleccionados = set()
 
+# Estado para rastrear cambios en sidebar
+if "dias_sidebar_prev" not in st.session_state:
+    st.session_state.dias_sidebar_prev = []
 
 with tab1:
     st.subheader(f"{mes_esp} {yy}")
+    
+    # Detectar cambios en dias_sidebar y actualizar seleccionados automáticamente
+    if dias_sidebar != st.session_state.dias_sidebar_prev:
+        # Limpiar seleccionados
+        st.session_state.seleccionados = set()
+        
+        # Agregar días que coincidan con los seleccionados en sidebar
+        for semana in month_calendar:
+            for i, dia in enumerate(semana):
+                if dia != 0 and dias_semana[i] in dias_sidebar:
+                    fecha_dia = datetime(yy, month_number, dia)
+                    hoy = datetime.today()
+                    es_pasado = fecha_dia.date() < hoy.date()
+                    es_feriado = dia in dias_feriados
+                    
+                    # Solo agregar si no es pasado ni feriado
+                    if not es_pasado and not es_feriado:
+                        st.session_state.seleccionados.add(dia)
+        
+        st.session_state.dias_sidebar_prev = dias_sidebar
+    
     # Mostrar calendario con checkboxes para seleccionar/deseleccionar días
     cols = st.columns(7)
     for i, d in enumerate(dias_semana):
@@ -169,10 +192,8 @@ with tab1:
                 hoy = datetime.today()
                 es_pasado = fecha_dia.date() < hoy.date()
 
-                # Solo marcar si no es pasado y cumple las condiciones
-                marcado = (not es_pasado) and (
-                    dia in st.session_state.seleccionados or dias_semana[i] in dias_sidebar
-                )
+                # Marcado basado solo en el estado de sesión
+                marcado = (not es_pasado) and (dia in st.session_state.seleccionados)
 
                 nuevo_estado = cols[i].checkbox(
                     label=label,
@@ -181,9 +202,10 @@ with tab1:
                     disabled=es_pasado
                 )
 
-                if nuevo_estado:
+                # Actualizar estado de sesión basado en la interacción del usuario
+                if nuevo_estado and not es_pasado:
                     st.session_state.seleccionados.add(dia)
-                else:
+                elif not nuevo_estado:
                     st.session_state.seleccionados.discard(dia)
 
     col1a, col2a, col3a, col4a, col5a = st.columns(5)
@@ -206,6 +228,7 @@ with tab1:
     with col2:
         if st.button("Deseleccionar todos los días"):
             st.session_state.seleccionados = set()
+            st.rerun()
 
     n_dias = len(seleccionados_ordenados)
     valor_total_aprox = round(int(n_dias*valor_minuto*duracion_clase), -1)
@@ -224,13 +247,13 @@ with tab1:
     semanas_agrupadas = []
 
     for semana in calendario_mes:
-        dias_semana = []
+        dias_semana_temp = []
         for i, dia in enumerate(semana):
             if dia in dias_seleccionados:
                 nombre_dia = date(yy, mes, dia).strftime("%A")
-                dias_semana.append(f"{dia} ({nombre_dia})")
-        if dias_semana:
-            semanas_agrupadas.append(dias_semana)
+                dias_semana_temp.append(f"{dia} ({nombre_dia})")
+        if dias_semana_temp:
+            semanas_agrupadas.append(dias_semana_temp)
 
     lun_ini, lun_fin, mar_ini, mar_fin, mie_ini, mie_fin, jue_ini, jue_fin, vie_ini, vie_fin = [],[],[],[],[],[],[],[],[],[]
 
@@ -261,20 +284,18 @@ with tab1:
         vie_fin = (vie_ini + timedelta(minutes=duracion_clase)).time()
         horarios["Vendredi"] = (viernes, vie_fin)
 
-
-    # Construir el texto de las semanas agrupadas
     # Agrupación por semana como tuplas
     semanas_agrupadas = []
 
     for semana in calendario_mes:
-        dias_semana = []
+        dias_semana_lista = []
         for dia in semana:
             if dia in dias_seleccionados and dia != 0:
                 nombre_dia_en = date(yy, mes, dia).strftime("%A")  # día en inglés
                 nombre_dia_fr = dias_frances.get(nombre_dia_en, nombre_dia_en)
-                dias_semana.append((str(dia), nombre_dia_fr))
-        if dias_semana:
-            semanas_agrupadas.append(dias_semana)
+                dias_semana_lista.append((str(dia), nombre_dia_fr))
+        if dias_semana_lista:
+            semanas_agrupadas.append(dias_semana_lista)
 
     # Construir texto final
     lineas = []
@@ -319,5 +340,3 @@ with tab2:
         width=1200,
         scrolling=True
     )
-
-
